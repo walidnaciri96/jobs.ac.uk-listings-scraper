@@ -1,4 +1,4 @@
-def job_names(subjects, url_standard, keywords):
+def listings_names(subjects, url_standard, keywords):
     
     """
     This code pulls jobs from jobs.ac.uk
@@ -167,7 +167,7 @@ def job_names(subjects, url_standard, keywords):
     date_placed_n = pd.to_datetime(date_placed_n, format='%d %b %Y', errors='coerce').date
 
     # Storing previous version of output in a variable (if it exists)
-    name_file = cwd + '/results.xlsx'
+    name_file = cwd + '/listings.xlsx'
     if os.path.exists(name_file):
         old_r = True
         old_results = pd.read_excel(name_file)
@@ -195,6 +195,7 @@ def job_names(subjects, url_standard, keywords):
     # Different formatting depending on the presence of new listings or not 
     if indexes == -1:
         print("Creating new results file")
+        print(f'{len(final_index.index)} new listings \n')
         with pd.ExcelWriter(name_file, engine='xlsxwriter') as writer:
             final_index.to_excel(writer, sheet_name = 'Sheet1',index = False)
             workbook = writer.book
