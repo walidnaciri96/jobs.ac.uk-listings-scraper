@@ -1,4 +1,4 @@
-def listings_names(subjects, url_standard, keywords):
+def listings_names(url_standard, keywords):
     
     """
     This code pulls jobs from jobs.ac.uk
@@ -141,8 +141,8 @@ def listings_names(subjects, url_standard, keywords):
                 time_left.append(0)
             else: 
                 time_left.append(int(dates_d[i])-int(day))
-            else:
-                time_left.append(0)
+        else:
+            time_left.append(0)
 
 
 
