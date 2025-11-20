@@ -43,21 +43,6 @@ def listings_names(url_standard, keywords):
         
     # Getting current work directory
     cwd = os.getcwd()
-    
-    # Making sure the link is correct and making sure all results are displayed in one page
-    if 'pageSize' in url_standard: 
-        if int(url_standard.split('pageSize=')[1].split('&startIndex=')[0]) < 500:
-            url_standard = url_standard.replace('pageSize='+url_standard.split('pageSize=')[1].split('&startIndex=')[0],'pageSize=500')
-    
-    # Extracting the html code
-    html_doc = urlopen(url_standard).read()
-    soup = BeautifulSoup(html_doc, 'html.parser')
-
-    jobs = []
-    dates = []
-    links = []
-    salary = []
-
 
     #Today's date
     now = datetime.datetime.now()
@@ -66,35 +51,60 @@ def listings_names(url_standard, keywords):
     month = daytime.split('-')[0]
     day = daytime.split('-')[1]
     year = daytime.split('-')[2]
-
-    # Extract job names and associated links
-    jobs = [str(x.string) for x in soup.find_all('a') if "None" not in str(x.string)]
-    links = [x.get('href') for x in soup.find_all('a') if '/job/' in str(x.get('href'))]
-
-    # Extract location
-    location = [x.string for x in soup.find_all('b')]
-
-    # Extract deadline   
-    dates = [y.text.strip() for y in soup.find_all('span', class_=['j-search-result__date--blue', 'j-search-result__date--red']) if y]     
         
-    # Extract salary
-    salary = [y.text.strip() for y in soup.find_all('div', class_="j-search-result__info") if y]
+    # Creating empty lists to store each variable
+    Jobs = []
+    Links = []
+    Location = []
+    Dates = []
+    Salary = []
+    Date_placed = []
 
-    # Extract date placed
-    date_placed = [str(x).split('Date Placed: ')[1].split('</div>')[0].split('</strong>')[1] for x in soup.find_all('div')
-                if 'Date Placed: ' in str(x) and '/job/' not in str(x)]
+    # Loop to go through each page
+    for ps in range(1,426,25):
+        pos = url_standard.find('startIndex=')+11
+        number = str(ps)
+        url = url_standard[:pos]+number+url_standard[pos+1:]
 
+        # Extracting the html code
+        html_doc = urlopen(url).read()
+        soup = BeautifulSoup(html_doc, 'html.parser')
 
-    # Only keeping the actual jobs from the website data mining    
-    start = jobs.index('Privacy Notice')+4
-    end = jobs.index('×')
-    jobs = jobs[start:end]
+        # Extract job names and associated links
+        jobs = [str(x.string) for x in soup.find_all('a') if "None" not in str(x.string)]
+        links = [x.get('href') for x in soup.find_all('a') if '/job/' in str(x.get('href'))]
+    
+        # Extract location
+        location = [x.string for x in soup.find_all('b')]
 
+        # Extract deadline   
+        dates = [y.text.strip() for y in soup.find_all('span', class_=['j-search-result__date--blue', 'j-search-result__date--red']) if y]     
+            
+        # Extract salary
+        salary = [y.text.strip() for y in soup.find_all('div', class_="j-search-result__info") if y]
+    
+        # Extract date placed
+        date_placed = [str(x).split('Date Placed: ')[1].split('</div>')[0].split('</strong>')[1] for x in soup.find_all('div')
+                    if 'Date Placed: ' in str(x) and '/job/' not in str(x)]
+    
+    
+        # Only keeping the actual jobs from the website data mining    
+        start = jobs.index('Privacy Notice')+4
+        end = jobs.index('×')
+        jobs = jobs[start:end]
+    
+    
+        # Removing the \n and spaces in the job titles and salary
+        jobs = [format_func(jobs[i]) for i in range(0,len(jobs)) if "\n" in jobs[i]] 
+        salary = [format_func(salary[i]) for i in range(0,len(salary))]    
+        date_placed = [format_func(date_placed[i]) for i in range(0,len(date_placed))] 
 
-    # Removing the \n and spaces in the job titles and salary
-    jobs = [format_func(jobs[i]) for i in range(0,len(jobs)) if "\n" in jobs[i]] 
-    salary = [format_func(salary[i]) for i in range(0,len(salary))]    
-    date_placed = [format_func(date_placed[i]) for i in range(0,len(date_placed))]  
+        Links.extend(links)
+        Jobs.extend(jobs)
+        Location.extend(location)
+        Dates.extend(dates)
+        Salary.extend(salary)
+        Date_placed.extend(date_placed)
         
     # Creating final lists of relevant listings
     jobs_n = []
@@ -109,19 +119,16 @@ def listings_names(url_standard, keywords):
     # Deleting jobs with given keywords in the title:
     for i in range(0,len(jobs)):
         if any(x in jobs[i] for x in keywords):
-            not_relevant.append(jobs[i])
+            not_relevant.append(Jobs[i])
         else: 
-            jobs_n.append(jobs[i])
-            dates_n.append(dates[i])
-            links_n.append(links[i])
-            salary_n.append(salary[i])
-            date_placed_n.append(date_placed[i])
-            location_n.append(location[i])
+            jobs_n.append(Jobs[i])
+            dates_n.append(Dates[i])
+            links_n.append(Links[i])
+            salary_n.append(Salary[i])
+            date_placed_n.append(Date_placed[i])
+            location_n.append(Location[i])
 
-    del jobs, dates, not_relevant, salary, date_placed, location
-
-    dates_m = []
-    dates_d = []
+    del jobs, Jobs, dates, Dates, not_relevant, salary, Salary, date_placed, Date_placed, location, Location
 
     dates_d = [x.split(' ')[0] for x in dates_n]
     dates_m = [x.split(' ')[1] for x in dates_n]
@@ -149,8 +156,7 @@ def listings_names(url_standard, keywords):
     # Delete jobs with zero day left until deadline
     indexes = [i for i in range(0,len(time_left)) if time_left[i] == 0]
     for index in sorted(indexes, reverse=True):
-        del jobs_n[index], dates_n[index], links_n[index], salary_n[index], time_left[index], date_placed_n[index], location_n[index]
-                                
+        del jobs_n[index], dates_n[index], links_n[index], salary_n[index], time_left[index], date_placed_n[index], location_n[index]                        
     del indexes
     time_left = [elem for elem in time_left if elem != 0] 
 
