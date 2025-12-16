@@ -139,15 +139,19 @@ def listings_names(url_standard, keywords):
 
 
     # Checking if the deadline is later than current date
-    for i in range(0,len(dates_n)): 
-        m = months.index(dates_n[i].split(' ')[1])+1
-        if m > months.index(month)+1: 
-            time_left.append(int(dates_d[i])+(months_len[months.index(month)]-int(day)))
-        elif m == months.index(month)+1:
-            if 0 <= int(dates_d[i])-int(day) <= 1:
-                time_left.append(0)
-            else: 
-                time_left.append(int(dates_d[i])-int(day))
+    deadlines = []
+    c_date = datetime.today()
+
+    for i in dates_n:
+        i = parse(i + ' ' + str(datetime.now().year))
+        if (i - c_date) < timedelta(days=0):
+            i = i.replace(year=c_date.year +1)
+        deadlines.append(i)
+
+    for i in deadlines:
+        diff = i - c_date
+        if diff.days >= 1:
+            time_left.append(diff.days)
         else:
             time_left.append(0)
 
