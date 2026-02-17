@@ -14,10 +14,11 @@ def listings_names(url_standard, keywords):
     #Necessary libraries
     from urllib.request import urlopen
     from bs4 import BeautifulSoup
-    import datetime
+    from datetime import datetime, timedelta
     import pandas as pd
     import openpyxl
     import os
+    from dateutil.parser import parse
 
     # Function to format text used later
     def format_func(text):
@@ -87,7 +88,6 @@ def listings_names(url_standard, keywords):
         date_placed = [str(x).split('Date Placed: ')[1].split('</div>')[0].split('</strong>')[1] for x in soup.find_all('div')
                     if 'Date Placed: ' in str(x) and '/job/' not in str(x)]
     
-    
         # Only keeping the actual jobs from the website data mining    
         start = jobs.index('Privacy Notice')+4
         end = jobs.index('×')
@@ -133,28 +133,27 @@ def listings_names(url_standard, keywords):
     dates_d = [x.split(' ')[0] for x in dates_n]
     dates_m = [x.split(' ')[1] for x in dates_n]
 
-    months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    months_len = [31,28,31,30,31,30,31,31,30,31,30,31]
     time_left = []
 
 
     # Checking if the deadline is later than current date
     deadlines = []
-    c_date = datetime.today()
+    c_date = datetime.today().today().replace(hour = 0, minute=0, second=0, microsecond=0)
 
     for i in dates_n:
         i = parse(i + ' ' + str(datetime.now().year))
         if (i - c_date) < timedelta(days=0):
             i = i.replace(year=c_date.year +1)
-        deadlines.append(i)
+            deadlines.append(i)
+        else: 
+            deadlines.append(i)
 
     for i in deadlines:
-        diff = i - c_date
+        diff = i - c_date + timedelta(days=1)
         if diff.days >= 1:
             time_left.append(diff.days)
         else:
             time_left.append(0)
-
 
 
     # Delete jobs with zero day left until deadline
@@ -169,8 +168,8 @@ def listings_names(url_standard, keywords):
     
     # Creating functioning links
     links_n = ['www.jobs.ac.uk'+links_n[i] for i in range(0,len(links_n))]
-     
 
+    
     # Adding year to date placed
     for i in range(0,len(date_placed_n)): 
         date_placed_n[i] = date_placed_n[i] +' '+ year if month_func(date_placed_n[i].split(' ')[1]) <= month_func(month) else date_placed_n[i] +' '+ str(int(year)-1)
